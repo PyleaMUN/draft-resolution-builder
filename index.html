@@ -119,6 +119,62 @@
       </div>
     </div>
   </main>
+
+  <!-- Firebase SDKs and Initialization -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove, collection, addDoc, query, orderBy, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // Your web app's Firebase configuration
+    // Use the global __firebase_config variable provided by the Canvas environment
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+      apiKey: "AIzaSyC_IHwSSoRxcysu4QZRewZdqhhD1LuF0xQ",
+      authDomain: "pyleamun-resolution-builder.firebaseapp.com",
+      projectId: "pyleamun-resolution-builder",
+      storageBucket: "pyleamun-resolution-builder.firebasestorage.app",
+      messagingSenderId: "249510999834",
+      appId: "1:249510999834:web:b6e714939292210fd19ea3"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Make Firebase instances and functions globally accessible for app.js
+    window.db = db;
+    window.auth = auth;
+    window.firebase = {
+        getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove,
+        collection, addDoc, query, orderBy, getDoc, serverTimestamp,
+        getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously
+    };
+
+    // Use the __app_id and __initial_auth_token provided by the Canvas environment
+    // This ensures authentication works correctly within the Canvas iframe.
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    // Authenticate with the provided token or anonymously
+    async function authenticateFirebase() {
+        try {
+            if (initialAuthToken) {
+                await firebase.signInWithCustomToken(auth, initialAuthToken);
+                console.log("Signed in with custom token.");
+            } else {
+                await firebase.signInAnonymously(auth);
+                console.log("Signed in anonymously.");
+            }
+        } catch (error) {
+            console.error("Firebase authentication error:", error);
+        }
+    }
+
+    authenticateFirebase();
+
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
