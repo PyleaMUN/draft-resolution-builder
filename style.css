@@ -1,0 +1,389 @@
+
+body { 
+  font-family: Arial, sans-serif; 
+  background: #f8f8f8; 
+  margin: 0; 
+}
+
+header { 
+  background: #000000; 
+  color: white; 
+  padding: 1rem; 
+  display: flex; 
+  align-items: center; 
+  gap: 1rem; 
+}
+
+#logo { 
+  height: 50px; 
+}
+
+main { 
+  padding: 1rem; 
+}
+
+#login-container {
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+#editor-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+#resolution-header {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.header-field {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.header-field label {
+  font-weight: bold;
+  width: 150px;
+  margin-right: 1rem;
+}
+
+.header-field input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+textarea { 
+  width: 100%; 
+  height: 400px; 
+  margin-top: 1rem; 
+  font-size: 1rem; 
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+button { 
+  margin: 0.25rem; 
+  padding: 0.5rem 1rem; 
+  border-radius: 6px; 
+  border: none; 
+  background: #007BFF; 
+  color: white; 
+  cursor: pointer; 
+  transition: background-color 0.2s;
+}
+
+button:hover { 
+  background: #0056b3; 
+}
+
+button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+#login-container {
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+#login-container h3 {
+  margin: 1.5rem 0 0.5rem 0;
+  color: #333;
+}
+
+#login-container select,
+#login-container input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+#login-container button {
+  width: 100%;
+  padding: 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+#login-container button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+#login-container button:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+#chair-password {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 1rem 0;
+  border-left: 4px solid #007bff;
+}
+
+#delegate-bloc-container {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 1rem 0;
+  border-left: 4px solid #28a745;
+}
+
+#info-bar { 
+  display: flex; 
+  align-items: center; 
+  gap: 1rem; 
+  margin-bottom: 1rem; 
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#timer {
+  font-family: 'Courier New', monospace;
+  font-size: 1.2rem;
+  font-weight: bold;
+  background: #f8f9fa;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+#lock-toggle {
+  background: #28a745;
+}
+
+#lock-toggle:hover {
+  background: #218838;
+}
+
+#chair-bloc-container, #delegate-bloc-container { 
+  margin: 1rem 0; 
+  padding: 1rem; 
+  border: 1px solid #ddd; 
+  border-radius: 6px; 
+  background: #f9f9f9; 
+}
+
+#existing-blocs { 
+  margin-top: 1rem; 
+}
+
+#existing-blocs div { 
+  padding: 0.5rem; 
+  margin: 0.25rem 0; 
+  background: white; 
+  border-radius: 4px; 
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#chair-controls {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.chair-section {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f9f9f9;
+}
+
+#bloc-selector {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#chair-bloc-select {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+#clauses {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#clauses h3 {
+  margin-top: 0;
+  color: #003366;
+}
+
+#preambulatory-buttons, #operative-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+#preambulatory-buttons button, #operative-buttons button {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+}
+
+#resolution-display {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#resolution-display h3 {
+  margin-top: 0;
+  color: #000000;
+}
+
+#resolution-text {
+  font-family: 'Times New Roman', serif;
+  line-height: 1.6;
+  font-size: 1rem;
+  white-space: pre-line;
+}
+
+/* Add visual indicators for formatting */
+.italic-text {
+  font-style: italic;
+  color: #0066cc;
+}
+
+.underlined-text {
+  text-decoration: underline;
+  color: #cc6600;
+}
+
+#comments-section {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#comments-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.comment {
+  background: white;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  border-left: 4px solid #007BFF;
+}
+
+.comment-time {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.comment-text {
+  font-size: 0.9rem;
+}
+
+#comment-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#comment-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+select { 
+  padding: 0.5rem; 
+  margin: 0.25rem; 
+  border-radius: 4px; 
+  border: 1px solid #ccc; 
+  background: white;
+}
+
+input[type="text"], input[type="password"] { 
+  padding: 0.5rem; 
+  margin: 0.25rem; 
+  border-radius: 4px; 
+  border: 1px solid #ccc; 
+  background: white;
+}
+
+input:disabled, textarea:disabled {
+  background: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+h3 {
+  color: #003366;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  #info-bar {
+    flex-wrap: wrap;
+  }
+  
+  .header-field {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .header-field label {
+    width: auto;
+    margin-bottom: 0.25rem;
+  }
+  
+  #comment-controls {
+    flex-direction: column;
+  }
+}
