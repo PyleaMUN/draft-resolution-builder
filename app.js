@@ -119,7 +119,8 @@ function initializeUI() {
   document.getElementById("enter-button").addEventListener("click", enterEditor); // Added event listener for enter button
 
   // Chair controls buttons
-  document.getElementById("create-bloc-button").addEventListener("click", createBloc); // Added event listener for create bloc button
+  // IMPORTANT: Ensure this button ID matches your index.html
+  document.getElementById("create-bloc-button").addEventListener("click", createBloc);
   document.getElementById("lock-toggle").addEventListener("click", toggleLock);
   document.getElementById("set-timer").addEventListener("click", setTimer);
   document.getElementById("start-timer").addEventListener("click", startTimer);
@@ -603,7 +604,6 @@ async function addComment() {
   }
 
   const commentsCollectionRef = db.collection(`artifacts/${appId}/public/data/committees/${committeeId}/blocs/${blocName}/comments`);
-  console.log(`addComment: Adding comment to path: ${commentsCollectionRef.path}`);
 
   try {
     await commentsCollectionRef.add({
