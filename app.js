@@ -279,7 +279,9 @@ function updateBlocDisplays() {
   const blocsCollectionRef = db.collection(`artifacts/${appId}/public/data/committees/${committeeId}/blocs`);
   console.log(`updateBlocDisplays: Setting up listener for blocs at path: artifacts/${appId}/public/data/committees/${committeeId}/blocs`);
 
-  blocListeners.unsubscribeBlocs = blocsCollectionRef.onSnapshot((snapshot) => {
+  const userAtSnapshot = { ...currentUser }; // freeze currentUser at time of listener setup
+blocListeners.unsubscribeBlocs = blocsCollectionRef.onSnapshot((snapshot) => {
+  console.log("🔍 userAtSnapshot:", userAtSnapshot);
     console.log("updateBlocDisplays: Received new bloc snapshot.");
     const existingBlocsDiv = document.getElementById("existing-blocs");
     const availableBlocsSelect = document.getElementById("available-blocs");
@@ -300,7 +302,7 @@ function updateBlocDisplays() {
       console.log(`updateBlocDisplays: Found bloc: ${blocName}`, blocData);
 
       // Chair's existing blocs display
-      if (existingBlocsDiv && currentUser.role === "chair") {
+      if (existingBlocsDiv && userAtSnapshot.role === "chair")
         const blocDiv = document.createElement("div");
         blocDiv.innerHTML = `
           <strong>${blocName}</strong> - Members: ${blocData.members ? blocData.members.length : 0}
@@ -310,7 +312,7 @@ function updateBlocDisplays() {
       }
 
       // Delegate's available blocs dropdown
-      if (availableBlocsSelect && currentUser.role === "delegate") {
+      if (availableBlocsSelect && userAtSnapshot.role === "delegate")
         const option = document.createElement("option");
         option.value = blocName;
         option.textContent = blocName;
@@ -319,7 +321,7 @@ function updateBlocDisplays() {
       }
 
       // Chair's select bloc to view dropdown
-      if (chairBlocSelect && currentUser.role === "chair") {
+      if (chairBlocSelect && userAtSnapshot.role === "chair")
         const option = document.createElement("option");
         option.value = blocName;
         option.textContent = blocName;
@@ -328,7 +330,7 @@ function updateBlocDisplays() {
     });
 
     // Log the final state of the delegate dropdown after the loop
-    if (availableBlocsSelect && currentUser.role === "delegate") {
+    if (availableBlocsSelect && userAtSnapshot.role === "delegate")
         console.log("updateBlocDisplays: Delegate dropdown innerHTML after update:", availableBlocsSelect.innerHTML);
     }
 
