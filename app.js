@@ -119,8 +119,7 @@ function initializeUI() {
   document.getElementById("enter-button").addEventListener("click", enterEditor); // Added event listener for enter button
 
   // Chair controls buttons
-  // IMPORTANT: Ensure this button ID matches your index.html
-  document.getElementById("create-bloc-button").addEventListener("click", createBloc);
+  document.getElementById("create-bloc-button").addEventListener("click", createBloc); // Added event listener for create bloc button
   document.getElementById("lock-toggle").addEventListener("click", toggleLock);
   document.getElementById("set-timer").addEventListener("click", setTimer);
   document.getElementById("start-timer").addEventListener("click", startTimer);
@@ -286,6 +285,7 @@ function updateBlocDisplays() {
     const availableBlocsSelect = document.getElementById("available-blocs");
     const chairBlocSelect = document.getElementById("chair-bloc-select");
 
+    // Always clear existing options before populating
     if (existingBlocsDiv) existingBlocsDiv.innerHTML = "<h4>Existing Blocs:</h4>";
     if (availableBlocsSelect) availableBlocsSelect.innerHTML = '<option value="">Select a bloc</option>';
     if (chairBlocSelect) chairBlocSelect.innerHTML = '<option value="">Select a bloc</option>';
@@ -299,6 +299,7 @@ function updateBlocDisplays() {
       const blocData = docSnap.data();
       console.log(`updateBlocDisplays: Found bloc: ${blocName}`, blocData);
 
+      // Chair's existing blocs display
       if (existingBlocsDiv && currentUser.role === "chair") {
         const blocDiv = document.createElement("div");
         blocDiv.innerHTML = `
@@ -308,13 +309,16 @@ function updateBlocDisplays() {
         existingBlocsDiv.appendChild(blocDiv);
       }
 
+      // Delegate's available blocs dropdown
       if (availableBlocsSelect && currentUser.role === "delegate") {
         const option = document.createElement("option");
         option.value = blocName;
         option.textContent = blocName;
         availableBlocsSelect.appendChild(option);
+        console.log(`updateBlocDisplays: Appended option for delegate: ${blocName}`); // New log to confirm append
       }
 
+      // Chair's select bloc to view dropdown
       if (chairBlocSelect && currentUser.role === "chair") {
         const option = document.createElement("option");
         option.value = blocName;
@@ -322,6 +326,12 @@ function updateBlocDisplays() {
         chairBlocSelect.appendChild(option);
       }
     });
+
+    // Log the final state of the delegate dropdown after the loop
+    if (availableBlocsSelect && currentUser.role === "delegate") {
+        console.log("updateBlocDisplays: Delegate dropdown innerHTML after update:", availableBlocsSelect.innerHTML);
+    }
+
 
     // If a bloc was previously selected by chair, try to re-select it
     if (currentUser.role === "chair" && currentUser.selectedBloc && chairBlocSelect) {
