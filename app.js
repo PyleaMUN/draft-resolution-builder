@@ -50,7 +50,7 @@ service cloud.firestore {
     // This rule allows any authenticated user to read and write
     // to all documents and subcollections under the 'public/data' path
     // within your specific application's artifact space.
-    // Replace 'pyleamun-app' with the actual appId you define in index.html if different.
+    // Ensure 'pyleamun-app' matches the window.appId in your index.html
     match /artifacts/{appId}/public/data/{document=**} {
       allow read, write: if request.auth != null;
     }
@@ -64,12 +64,14 @@ window.addEventListener('load', async () => {
   db = window.db;
   auth = window.auth;
   appId = window.appId;
+  console.log("App loaded. Initializing Firebase...");
 
   // Sign in to Firebase Auth anonymously.
   try {
     await auth.signInAnonymously();
+    console.log("Anonymous sign-in attempt successful.");
   } catch (error) {
-    console.error("Firebase Auth Error:", error);
+    console.error("Firebase Auth Error during signInAnonymously:", error);
     alert("Authentication Error: " + error.message + ". Please refresh.");
   }
 
@@ -84,7 +86,7 @@ window.addEventListener('load', async () => {
     } else {
       userId = null;
       isAuthReady = false;
-      console.log("No Firebase user logged in.");
+      console.log("No Firebase user logged in (onAuthStateChanged).");
       // Handle logout or unauthenticated state if necessary
     }
   });
@@ -92,6 +94,7 @@ window.addEventListener('load', async () => {
 
 // --- Core UI Initialization (called after Firebase Auth is ready) ---
 function initializeUI() {
+  console.log("initializeUI called. Firebase should be ready.");
   // Populate clause buttons
   const preambContainer = document.getElementById("preambulatory-buttons");
   preambulatoryClauses.forEach(c => {
@@ -168,16 +171,22 @@ function initializeUI() {
  * @param {string} committeeId
  */
 async function ensureCommitteeExists(committeeId) {
-  if (!isAuthReady) return;
+  if (!isAuthReady) {
+    console.warn("ensureCommitteeExists: Firebase not ready.");
+    return;
+  }
   const committeeRef = db.collection(`artifacts/${appId}/public/data/committees`).doc(committeeId);
   try {
     const docSnap = await committeeRef.get();
     if (!docSnap.exists) {
+      console.log(`Committee ${committeeId} does not exist. Creating...`);
       await committeeRef.set({
         isEditingLocked: false,
         timer: { totalSeconds: 0, isRunning: false, startTime: null }
       });
       console.log(`Committee ${committeeId} initialized in Firestore.`);
+    } else {
+      console.log(`Committee ${committeeId} already exists.`);
     }
   } catch (e) {
     console.error("Error ensuring committee exists:", e);
@@ -188,7 +197,12 @@ async function ensureCommitteeExists(committeeId) {
  * Creates a new bloc document in Firestore.
  */
 async function createBloc() {
-  if (!isAuthReady) return;
+  console.log("createBloc called.");
+  if (!isAuthReady) {
+    alert("Firebase authentication not ready. Please wait a moment and try again.");
+    console.warn("createBloc: Firebase not ready.");
+    return;
+  }
   const name = document.getElementById("new-bloc-name").value.trim();
   const password = document.getElementById("new-bloc-password").value;
 
@@ -204,10 +218,13 @@ async function createBloc() {
   }
 
   const blocRef = db.collection(`artifacts/${appId}/public/data/committees/${committeeId}/blocs`).doc(name);
+  console.log(`Attempting to create bloc at path: artifacts/${appId}/public/data/committees/${committeeId}/blocs/${name}`);
+
   try {
     const docSnap = await blocRef.get();
     if (docSnap.exists) {
       alert("Bloc name already exists!");
+      console.warn("createBloc: Bloc name already exists.");
       return;
     }
 
@@ -225,11 +242,12 @@ async function createBloc() {
     });
 
     alert(`Bloc "${name}" created successfully!`);
+    console.log(`Bloc "${name}" successfully created in Firestore.`);
     document.getElementById("new-bloc-name").value = "";
     document.getElementById("new-bloc-password").value = "";
     // updateBlocDisplays will be triggered by the onSnapshot listener
   } catch (e) {
-    console.error("Error creating bloc:", e);
+    console.error("Error creating bloc in Firestore:", e);
     alert("Failed to create bloc: " + e.message);
   }
 }
@@ -239,19 +257,30 @@ async function createBloc() {
  * This is now driven by a Firestore snapshot listener.
  */
 function updateBlocDisplays() {
-  if (!isAuthReady) return;
+  console.log("updateBlocDisplays called.");
+  if (!isAuthReady) {
+    console.warn("updateBlocDisplays: Firebase not ready.");
+    return;
+  }
   const committeeId = document.getElementById("committee").value || currentUser.committee;
-  if (!committeeId) return;
+  if (!committeeId) {
+    console.log("updateBlocDisplays: No committee selected yet.");
+    return;
+  }
+  console.log(`updateBlocDisplays: Current committeeId: ${committeeId}`);
 
   // Unsubscribe from previous bloc listeners if committee changes
   if (blocListeners.unsubscribeBlocs) {
+    console.log("updateBlocDisplays: Unsubscribing from previous bloc listener.");
     blocListeners.unsubscribeBlocs();
     blocListeners = {};
   }
 
   const blocsCollectionRef = db.collection(`artifacts/${appId}/public/data/committees/${committeeId}/blocs`);
+  console.log(`updateBlocDisplays: Setting up listener for blocs at path: artifacts/${appId}/public/data/committees/${committeeId}/blocs`);
 
   blocListeners.unsubscribeBlocs = blocsCollectionRef.onSnapshot((snapshot) => {
+    console.log("updateBlocDisplays: Received new bloc snapshot.");
     const existingBlocsDiv = document.getElementById("existing-blocs");
     const availableBlocsSelect = document.getElementById("available-blocs");
     const chairBlocSelect = document.getElementById("chair-bloc-select");
@@ -260,9 +289,14 @@ function updateBlocDisplays() {
     if (availableBlocsSelect) availableBlocsSelect.innerHTML = '<option value="">Select a bloc</option>';
     if (chairBlocSelect) chairBlocSelect.innerHTML = '<option value="">Select a bloc</option>';
 
+    if (snapshot.empty) {
+        console.log("updateBlocDisplays: No blocs found for this committee.");
+    }
+
     snapshot.forEach(docSnap => {
       const blocName = docSnap.id;
       const blocData = docSnap.data();
+      console.log(`updateBlocDisplays: Found bloc: ${blocName}`, blocData);
 
       if (existingBlocsDiv && currentUser.role === "chair") {
         const blocDiv = document.createElement("div");
@@ -293,7 +327,7 @@ function updateBlocDisplays() {
       chairBlocSelect.value = currentUser.selectedBloc;
     }
   }, (error) => {
-    console.error("Error fetching blocs:", error);
+    console.error("Error listening to blocs collection:", error);
   });
 }
 
@@ -302,10 +336,12 @@ function updateBlocDisplays() {
  * Sets up listeners for that specific bloc's data.
  */
 function onChairBlocSelect() {
+  console.log("onChairBlocSelect called.");
   const selectedBloc = document.getElementById("chair-bloc-select").value;
   if (selectedBloc) {
     viewBlocResolution(selectedBloc);
   } else {
+    console.log("onChairBlocSelect: No bloc selected, clearing display.");
     // Clear resolution display when no bloc selected
     document.getElementById("resolution-text").value = "";
     document.getElementById("comments-list").innerHTML = "";
@@ -327,21 +363,35 @@ function onChairBlocSelect() {
  * @param {string} blocName
  */
 function viewBlocResolution(blocName) {
-  if (!isAuthReady || currentUser.role !== "chair") return;
+  console.log(`viewBlocResolution called for bloc: ${blocName}`);
+  if (!isAuthReady || currentUser.role !== "chair") {
+    console.warn("viewBlocResolution: Firebase not ready or not a chair.");
+    return;
+  }
 
   currentUser.selectedBloc = blocName;
   document.getElementById("user-info").textContent =
     `${currentUser.role.toUpperCase()} – ${currentUser.committee.toUpperCase()} – Viewing: ${blocName}`;
 
   // Unsubscribe from previous bloc listeners if they exist
-  if (blocListeners.unsubscribeResolution) blocListeners.unsubscribeResolution();
-  if (blocListeners.unsubscribeComments) blocListeners.unsubscribeComments();
+  if (blocListeners.unsubscribeResolution) {
+    console.log("viewBlocResolution: Unsubscribing from previous resolution listener.");
+    blocListeners.unsubscribeResolution();
+  }
+  if (blocListeners.unsubscribeComments) {
+    console.log("viewBlocResolution: Unsubscribing from previous comments listener.");
+    blocListeners.unsubscribeComments();
+  }
 
   const blocRef = db.collection(`artifacts/${appId}/public/data/committees/${currentUser.committee}/blocs`).doc(blocName);
   const commentsCollectionRef = db.collection(`artifacts/${appId}/public/data/committees/${currentUser.committee}/blocs/${blocName}/comments`);
+  console.log(`viewBlocResolution: Setting up listener for resolution at path: artifacts/${appId}/public/data/committees/${currentUser.committee}/blocs/${blocName}`);
+  console.log(`viewBlocResolution: Setting up listener for comments at path: artifacts/${appId}/public/data/committees/${currentUser.committee}/blocs/${blocName}/comments`);
+
 
   // Listen for resolution changes
   blocListeners.unsubscribeResolution = blocRef.onSnapshot((docSnap) => {
+    console.log("viewBlocResolution: Received new resolution snapshot.");
     if (docSnap.exists) {
       const resolutionData = docSnap.data().resolution;
       if (resolutionData) {
@@ -366,6 +416,7 @@ function viewBlocResolution(blocName) {
 
   // Listen for comments changes
   blocListeners.unsubscribeComments = commentsCollectionRef.orderBy('timestamp').onSnapshot((snapshot) => {
+    console.log("viewBlocResolution: Received new comments snapshot.");
     updateCommentsDisplay(snapshot.docs.map(doc => doc.data()));
   }, (error) => {
     console.error("Error listening to comments:", error);
@@ -377,6 +428,7 @@ function viewBlocResolution(blocName) {
  * @returns {void}
  */
 function handleRoleChange() {
+  console.log("handleRoleChange called.");
   const role = document.getElementById("role").value;
   const delegateBlocContainer = document.getElementById("delegate-bloc-container");
   const chairPasswordDiv = document.getElementById("chair-password");
@@ -398,7 +450,11 @@ function handleRoleChange() {
  * @param {'preambulatory' | 'operative'} type
  */
 async function insertClause(clause, type) {
-  if (!isAuthReady) return;
+  console.log(`insertClause called: ${clause}, type: ${type}`);
+  if (!isAuthReady) {
+    console.warn("insertClause: Firebase not ready.");
+    return;
+  }
   const committeeId = currentUser.committee;
   const blocName = currentUser.bloc || currentUser.selectedBloc;
 
@@ -412,15 +468,17 @@ async function insertClause(clause, type) {
     const committeeSnap = await committeeDocRef.get();
     if (committeeSnap.exists && committeeSnap.data().isEditingLocked && currentUser.role === "delegate") {
       alert("Editing is currently locked by the chair!");
+      console.warn("insertClause: Editing locked by chair.");
       return;
     }
   } catch (e) {
-    console.error("Error checking lock status:", e);
+    console.error("Error checking lock status in insertClause:", e);
     alert("Could not check editing lock status.");
     return;
   }
 
   const blocRef = db.collection(`artifacts/${appId}/public/data/committees/${committeeId}/blocs`).doc(blocName);
+  console.log(`insertClause: Updating bloc at path: ${blocRef.path}`);
 
   try {
     await db.runTransaction(async (transaction) => {
@@ -444,10 +502,11 @@ async function insertClause(clause, type) {
         'resolution.preambulatoryClauses': updatedPreambulatory,
         'resolution.operativeClauses': updatedOperative
       });
+      console.log("insertClause: Transaction for clause update committed.");
     });
     // UI update will be handled by the onSnapshot listener for the resolution
   } catch (e) {
-    console.error("Error inserting clause:", e);
+    console.error("Error inserting clause in transaction:", e);
     alert("Failed to insert clause: " + e.message);
   }
 }
@@ -458,6 +517,7 @@ async function insertClause(clause, type) {
  * @param {object} resolutionData
  */
 function updateResolutionDisplay(resolutionData) {
+  // console.log("updateResolutionDisplay called with data:", resolutionData);
   let resolutionText = "";
 
   if (resolutionData) {
@@ -483,7 +543,11 @@ function updateResolutionDisplay(resolutionData) {
  * Saves header fields of the resolution to Firestore.
  */
 async function saveResolution() {
-  if (!isAuthReady) return;
+  // console.log("saveResolution called.");
+  if (!isAuthReady) {
+    console.warn("saveResolution: Firebase not ready.");
+    return;
+  }
   const committeeId = currentUser.committee;
   const blocName = currentUser.bloc || currentUser.selectedBloc;
 
@@ -497,7 +561,7 @@ async function saveResolution() {
       return;
     }
   } catch (e) {
-    console.error("Error checking lock status for save:", e);
+    console.error("Error checking lock status for saveResolution:", e);
     return;
   }
 
@@ -510,6 +574,7 @@ async function saveResolution() {
       'resolution.submittedBy': document.getElementById("submitted-by").value,
       'resolution.coSubmittedBy': document.getElementById("co-submitted-by").value
     });
+    // console.log("saveResolution: Header fields updated.");
     // UI update handled by onSnapshot listener
   } catch (e) {
     console.error("Error saving resolution header:", e);
@@ -521,7 +586,11 @@ async function saveResolution() {
  * Adds a comment to the current bloc's comments in Firestore.
  */
 async function addComment() {
-  if (!isAuthReady || currentUser.role !== "chair") return;
+  console.log("addComment called.");
+  if (!isAuthReady || currentUser.role !== "chair") {
+    console.warn("addComment: Firebase not ready or not a chair.");
+    return;
+  }
 
   const commentText = document.getElementById("comment-input").value.trim();
   if (!commentText) return;
@@ -534,6 +603,7 @@ async function addComment() {
   }
 
   const commentsCollectionRef = db.collection(`artifacts/${appId}/public/data/committees/${committeeId}/blocs/${blocName}/comments`);
+  console.log(`addComment: Adding comment to path: ${commentsCollectionRef.path}`);
 
   try {
     await commentsCollectionRef.add({
@@ -542,9 +612,10 @@ async function addComment() {
       chair: currentUser.id || "Chair" // Use Firebase Auth UID
     });
     document.getElementById("comment-input").value = "";
+    console.log("addComment: Comment successfully added.");
     // UI update handled by onSnapshot listener
   } catch (e) {
-    console.error("Error adding comment:", e);
+    console.error("Error adding comment to Firestore:", e);
     alert("Failed to add comment: " + e.message);
   }
 }
@@ -555,6 +626,7 @@ async function addComment() {
  * @param {Array<object>} comments
  */
 function updateCommentsDisplay(comments) {
+  // console.log("updateCommentsDisplay called with comments:", comments);
   const commentsDiv = document.getElementById("comments-list");
   commentsDiv.innerHTML = "";
 
@@ -582,7 +654,11 @@ function updateCommentsDisplay(comments) {
  * Toggles the editing lock status for the current committee in Firestore.
  */
 async function toggleLock() {
-  if (!isAuthReady || currentUser.role !== "chair") return;
+  console.log("toggleLock called.");
+  if (!isAuthReady || currentUser.role !== "chair") {
+    console.warn("toggleLock: Firebase not ready or not a chair.");
+    return;
+  }
 
   const committeeId = currentUser.committee;
   if (!committeeId) return;
@@ -593,10 +669,11 @@ async function toggleLock() {
     if (docSnap.exists) {
       const currentLockStatus = docSnap.data().isEditingLocked || false;
       await committeeRef.update({ isEditingLocked: !currentLockStatus });
+      console.log(`toggleLock: Lock status updated to ${!currentLockStatus}.`);
       // UI update handled by onSnapshot listener for committee data
     }
   } catch (e) {
-    console.error("Error toggling lock:", e);
+    console.error("Error toggling lock in Firestore:", e);
     alert("Failed to toggle lock: " + e.message);
   }
 }
@@ -607,6 +684,7 @@ async function toggleLock() {
  * @param {boolean} isEditingLocked
  */
 function updateEditingPermissions(isEditingLocked) {
+  // console.log("updateEditingPermissions called with isEditingLocked:", isEditingLocked);
   const isDelegate = currentUser.role === "delegate";
   const canEdit = !isDelegate || !isEditingLocked;
 
@@ -629,7 +707,11 @@ function updateEditingPermissions(isEditingLocked) {
  * Sets the timer duration for the current committee in Firestore.
  */
 async function setTimer() {
-  if (!isAuthReady || currentUser.role !== "chair") return;
+  console.log("setTimer called.");
+  if (!isAuthReady || currentUser.role !== "chair") {
+    console.warn("setTimer: Firebase not ready or not a chair.");
+    return;
+  }
 
   const minutes = parseInt(prompt("Enter minutes:")) || 0;
   const seconds = parseInt(prompt("Enter seconds:")) || 0;
@@ -646,9 +728,10 @@ async function setTimer() {
         startTime: null
       }
     });
+    console.log(`setTimer: Timer set to ${minutes}m ${seconds}s.`);
     // UI update handled by onSnapshot listener
   } catch (e) {
-    console.error("Error setting timer:", e);
+    console.error("Error setting timer in Firestore:", e);
     alert("Failed to set timer: " + e.message);
   }
 }
@@ -657,7 +740,11 @@ async function setTimer() {
  * Starts the timer for the current committee in Firestore.
  */
 async function startTimer() {
-  if (!isAuthReady || currentUser.role !== "chair") return;
+  console.log("startTimer called.");
+  if (!isAuthReady || currentUser.role !== "chair") {
+    console.warn("startTimer: Firebase not ready or not a chair.");
+    return;
+  }
 
   const committeeId = currentUser.committee;
   if (!committeeId) return;
@@ -675,11 +762,14 @@ async function startTimer() {
             startTime: Date.now() // Record start time
           }
         });
+        console.log("startTimer: Timer started.");
         // UI update handled by onSnapshot listener
+      } else {
+        console.log("startTimer: Timer already running or totalSeconds is 0.");
       }
     }
   } catch (e) {
-    console.error("Error starting timer:", e);
+    console.error("Error starting timer in Firestore:", e);
     alert("Failed to start timer: " + e.message);
   }
 }
@@ -688,7 +778,11 @@ async function startTimer() {
  * Pauses the timer for the current committee in Firestore.
  */
 async function pauseTimer() {
-  if (!isAuthReady || currentUser.role !== "chair") return;
+  console.log("pauseTimer called.");
+  if (!isAuthReady || currentUser.role !== "chair") {
+    console.warn("pauseTimer: Firebase not ready or not a chair.");
+    return;
+  }
 
   const committeeId = currentUser.committee;
   if (!committeeId) return;
@@ -708,11 +802,12 @@ async function pauseTimer() {
             startTime: null
           }
         });
+        console.log("pauseTimer: Timer paused.");
         // UI update handled by onSnapshot listener
       }
     }
   } catch (e) {
-    console.error("Error pausing timer:", e);
+    console.error("Error pausing timer in Firestore:", e);
     alert("Failed to pause timer: " + e.message);
   }
 }
@@ -721,7 +816,11 @@ async function pauseTimer() {
  * Resets the timer for the current committee in Firestore.
  */
 async function resetTimer() {
-  if (!isAuthReady || currentUser.role !== "chair") return;
+  console.log("resetTimer called.");
+  if (!isAuthReady || currentUser.role !== "chair") {
+    console.warn("resetTimer: Firebase not ready or not a chair.");
+    return;
+  }
 
   const committeeId = currentUser.committee;
   if (!committeeId) return;
@@ -735,9 +834,10 @@ async function resetTimer() {
         startTime: null
       }
     });
+    console.log("resetTimer: Timer reset.");
     // UI update handled by onSnapshot listener
   } catch (e) {
-    console.error("Error resetting timer:", e);
+    console.error("Error resetting timer in Firestore:", e);
     alert("Failed to reset timer: " + e.message);
   }
 }
@@ -758,6 +858,7 @@ function updateTimerDisplay(totalSeconds) {
  * Exports the current resolution to a PDF (via print dialog).
  */
 async function exportToPDF() {
+  console.log("exportToPDF called.");
   const committeeId = currentUser.committee;
   const blocName = currentUser.bloc || currentUser.selectedBloc;
   if (!blocName || !committeeId) {
@@ -813,8 +914,10 @@ async function exportToPDF() {
  * Handles user login and sets up the editor interface.
  */
 async function enterEditor() {
+  console.log("enterEditor called.");
   if (!isAuthReady) {
     alert("Firebase authentication not ready. Please wait a moment and try again.");
+    console.warn("enterEditor: Firebase not ready.");
     return;
   }
 
@@ -829,6 +932,7 @@ async function enterEditor() {
 
   if (validCodes[committee] !== code) {
     alert("Wrong committee code!");
+    console.warn("enterEditor: Wrong committee code.");
     return;
   }
 
@@ -836,6 +940,7 @@ async function enterEditor() {
     const chairPassword = document.getElementById("chair-password-input").value;
     if (chairPassword !== "resolutions@26") {
       alert("Invalid chair password!");
+      console.warn("enterEditor: Invalid chair password.");
       return;
     }
   }
@@ -850,11 +955,13 @@ async function enterEditor() {
 
     if (!selectedBloc) {
       alert("Delegates must select a bloc!");
+      console.warn("enterEditor: Delegate must select a bloc.");
       return;
     }
 
     if (!blocPassword) {
       alert("Please enter the bloc password!");
+      console.warn("enterEditor: Please enter bloc password.");
       return;
     }
 
@@ -863,12 +970,14 @@ async function enterEditor() {
       const docSnap = await blocRef.get();
       if (!docSnap.exists || docSnap.data().password !== blocPassword) {
         alert("Invalid bloc password!");
+        console.warn("enterEditor: Invalid bloc password.");
         return;
       }
       // Add delegate to bloc's members (optional, for tracking)
       const currentMembers = docSnap.data().members || [];
       if (!currentMembers.includes(userId)) {
         await blocRef.update({ members: firebase.firestore.FieldValue.arrayUnion(userId) });
+        console.log(`enterEditor: Added delegate ${userId} to bloc ${selectedBloc} members.`);
       }
 
       currentUser.bloc = selectedBloc;
@@ -886,6 +995,7 @@ async function enterEditor() {
     document.getElementById("question-of").value = "";
     document.getElementById("submitted-by").value = "";
     document.getElementById("co-submitted-by").value = "";
+    console.log("enterEditor: Chair logged in, clearing display.");
   }
 
   document.getElementById("login-container").style.display = "none";
@@ -902,9 +1012,11 @@ async function enterEditor() {
   // Unsubscribe from previous committee listener if it exists
   if (committeeListeners.unsubscribeCommittee) {
     committeeListeners.unsubscribeCommittee();
+    console.log("enterEditor: Unsubscribed from previous committee listener.");
   }
 
   committeeListeners.unsubscribeCommittee = committeeRef.onSnapshot((docSnap) => {
+    console.log("enterEditor: Received new committee snapshot.");
     if (docSnap.exists) {
       const committeeData = docSnap.data();
       const timer = committeeData.timer || { totalSeconds: 0, isRunning: false, startTime: null };
@@ -940,6 +1052,7 @@ async function enterEditor() {
  * Adjusts UI visibility and states based on the current user's role.
  */
 function setupRoleInterface() {
+  console.log("setupRoleInterface called.");
   const isChair = currentUser.role === "chair";
 
   document.getElementById("set-timer").style.display = isChair ? "inline" : "none";
@@ -972,6 +1085,7 @@ function setupRoleInterface() {
  * Checks if a delegate has selected a bloc to enable/disable the enter button.
  */
 function checkBlocSelection() {
+  // console.log("checkBlocSelection called.");
   const selectedBloc = document.getElementById("available-blocs").value;
   const enterButton = document.getElementById("enter-button");
   const role = document.getElementById("role").value;
