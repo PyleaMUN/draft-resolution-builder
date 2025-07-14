@@ -28,7 +28,8 @@ const operativeClauses = [
   "Accepts", "Affirms", "Approves", "Asks", "Authorizes", "Calls for", "Calls upon",
   "Condemns", "Confirms", "Decides", "Declares accordingly", "Demands", "Draws the attention",
   "Deplores", "Designates", "Encourages", "Endorses", "Emphasizes", "Expressing its appreciation",
-  "Expressing its hope", "Expressing its satisfaction", "Further invites", "Further proclaims",
+  "Expressing its hope", "Expressing its satisfaction",
+  "Further invites", "Further proclaims",
   "Further recommends", "Further requests", "Has resolved", "Hopes", "Invites", "Notes",
   "Proclaims", "Proposes", "Reaffirms", "Recommends", "Regrets", "Requests", "Seeks",
   "Solemnly affirms", "Strongly condemns", "Supports", "Suggests", "Takes note of",
@@ -268,6 +269,9 @@ function updateBlocDisplays() {
     return;
   }
   console.log(`updateBlocDisplays: Current committeeId: ${committeeId}`);
+  console.log(`updateBlocDisplays: currentUser.role: ${currentUser.role}`); // NEW DEBUG LOG
+  console.log(`updateBlocDisplays: availableBlocsSelect element:`, document.getElementById("available-blocs")); // NEW DEBUG LOG
+
 
   // Unsubscribe from previous bloc listeners if committee changes
   if (blocListeners.unsubscribeBlocs) {
@@ -329,9 +333,9 @@ function updateBlocDisplays() {
 
     // Log the final state of the delegate dropdown after the loop
     if (availableBlocsSelect && currentUser.role === "delegate") {
-        console.log("updateBlocDisplays: Delegate dropdown element:", availableBlocsSelect);
-        console.log("updateBlocDisplays: Delegate dropdown outerHTML after update:", availableBlocsSelect.outerHTML);
-        console.log("updateBlocDisplays: Delegate dropdown options count:", availableBlocsSelect.options.length);
+        console.log("updateBlocDisplays: Delegate dropdown element (after loop):", availableBlocsSelect);
+        console.log("updateBlocDisplays: Delegate dropdown outerHTML (after loop):", availableBlocsSelect.outerHTML);
+        console.log("updateBlocDisplays: Delegate dropdown options count (after loop):", availableBlocsSelect.options.length);
     }
 
 
@@ -446,12 +450,17 @@ function handleRoleChange() {
   const delegateBlocContainer = document.getElementById("delegate-bloc-container");
   const chairPasswordDiv = document.getElementById("chair-password");
 
+  console.log("handleRoleChange: New role selected:", role); // NEW DEBUG LOG
+
   if (role === "chair") {
     if (delegateBlocContainer) delegateBlocContainer.style.display = "none";
     if (chairPasswordDiv) chairPasswordDiv.style.display = "block";
   } else {
     if (delegateBlocContainer) delegateBlocContainer.style.display = "block";
     if (chairPasswordDiv) chairPasswordDiv.style.display = "none";
+    // This call to updateBlocDisplays happens when the role changes to delegate.
+    // At this point, currentUser.role might not be fully updated yet for the onSnapshot callback.
+    // The onSnapshot callback itself will receive the correct role when it fires.
     updateBlocDisplays(); // Update available blocs when delegate is selected
   }
   checkBlocSelection(); // Re-evaluate enter button state
@@ -573,7 +582,8 @@ async function saveResolution() {
       // Don't alert here, as it's called on every input. updateEditingPermissions handles disabling.
       return;
     }
-  } catch (e) {
+  }
+  catch (e) {
     console.error("Error checking lock status for saveResolution:", e);
     return;
   }
@@ -960,6 +970,7 @@ async function enterEditor() {
   let userInfoText = `${role.toUpperCase()} – ${committee.toUpperCase()} – User ID: ${userId}`; // Display Firebase UID
 
   currentUser = { role, committee, id: userId }; // Store Firebase UID
+  console.log("enterEditor: currentUser after setting:", currentUser); // NEW DEBUG LOG
 
   if (role === "delegate") {
     const selectedBloc = document.getElementById("available-blocs").value;
