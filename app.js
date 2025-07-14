@@ -59,7 +59,8 @@ service cloud.firestore {
 */
 
 // --- Initialization and Authentication ---
-window.addEventListener('load', async () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('✅ DOM fully loaded');
   // Get Firebase instances from window scope (set by index.html script module)
   db = window.db;
   auth = window.auth;
@@ -285,7 +286,9 @@ blocListeners.unsubscribeBlocs = blocsCollectionRef.onSnapshot((snapshot) => {
     console.log("updateBlocDisplays: Received new bloc snapshot.");
     const existingBlocsDiv = document.getElementById("existing-blocs");
     const availableBlocsSelect = document.getElementById("available-blocs");
+    if (!availableBlocsSelect) console.warn("❌ available-blocs select not found in DOM!");
     const chairBlocSelect = document.getElementById("chair-bloc-select");
+    if (!chairBlocSelect) console.warn("❌ chair-bloc-select not found in DOM!");
 
     // Always clear existing options before populating
     if (existingBlocsDiv) existingBlocsDiv.innerHTML = "<h4>Existing Blocs:</h4>";
