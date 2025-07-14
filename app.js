@@ -141,7 +141,7 @@ function setupBlocListener(committeeName, blocName) {
         document.getElementById("co-submitted-by").value = "";
         currentUser.bloc = null; // Clear selected bloc for delegate
         currentUser.selectedBloc = null; // Clear selected bloc for chair
-        alert("The selected bloc no longer exists. Please select another or create a new one.");
+        displayMessageBox("Bloc Deleted", "The selected bloc no longer exists. Please select another or create a new one.");
         // Consider redirecting to login or bloc selection screen
       }
     }, (error) => {
@@ -159,7 +159,7 @@ async function createBloc() {
   const password = document.getElementById("new-bloc-password").value; // IMPORTANT: In production, hash this password!
 
   if (!name || !password) {
-    alert("Please enter both bloc name and password!");
+    displayMessageBox("Input Required", "Please enter both bloc name and password!");
     return;
   }
 
@@ -169,7 +169,7 @@ async function createBloc() {
   try {
     const blocSnap = await firebase.getDoc(blocRef); // Check if bloc name already exists
     if (blocSnap.exists()) {
-      alert("Bloc name already exists!");
+      displayMessageBox("Bloc Exists", "Bloc name already exists!");
       return;
     }
 
@@ -196,10 +196,10 @@ async function createBloc() {
     updateBlocDisplays();
     document.getElementById("new-bloc-name").value = "";
     document.getElementById("new-bloc-password").value = "";
-    alert(`Bloc "${name}" created successfully!`);
+    displayMessageBox("Success!", `Bloc "${name}" created successfully!`);
   } catch (error) {
     console.error("Error creating bloc:", error);
-    alert("Failed to create bloc: " + error.message);
+    displayMessageBox("Error", "Failed to create bloc: " + error.message);
   }
 }
 
@@ -215,6 +215,7 @@ async function updateBlocDisplays() {
   let blocDataFromFirestore = {};
 
   try {
+    // FIX: Ensure firebase.getDocs is available through the global firebase object
     const querySnapshot = await firebase.getDocs(committeeBlocsCollectionRef);
     querySnapshot.forEach(doc => {
       blocDataFromFirestore[doc.id] = doc.data();
@@ -231,7 +232,8 @@ async function updateBlocDisplays() {
   const existingBlocsDiv = document.getElementById("existing-blocs");
   if (existingBlocsDiv) {
     existingBlocsDiv.innerHTML = "<h4>Existing Blocs:</h4>";
-    Object.keys(committees[committee].blocs || {}).forEach(blocName => {
+    const blocNames = Object.keys(committees[committee].blocs || {}).sort(); // Sort bloc names
+    blocNames.forEach(blocName => {
       const bloc = committees[committee].blocs[blocName];
       const blocDiv = document.createElement("div");
       blocDiv.innerHTML = `
@@ -246,7 +248,8 @@ async function updateBlocDisplays() {
   const availableBlocsSelect = document.getElementById("available-blocs");
   if (availableBlocsSelect) {
     availableBlocsSelect.innerHTML = '<option value="">Select a bloc</option>';
-    Object.keys(committees[committee].blocs || {}).forEach(blocName => {
+    const blocNames = Object.keys(committees[committee].blocs || {}).sort(); // Sort bloc names
+    blocNames.forEach(blocName => {
       const option = document.createElement("option");
       option.value = blocName;
       option.textContent = blocName;
@@ -261,7 +264,7 @@ async function updateBlocDisplays() {
       <h4>Select Bloc to View:</h4>
       <select id="chair-bloc-select" onchange="onChairBlocSelect()">
         <option value="">Select a bloc</option>
-        ${Object.keys(committees[committee].blocs || {}).map(blocName =>
+        ${Object.keys(committees[committee].blocs || {}).sort().map(blocName => // Sort bloc names
           `<option value="${blocName}" ${currentUser.selectedBloc === blocName ? 'selected' : ''}>${blocName}</option>`
         ).join('')}
       </select>
@@ -290,6 +293,8 @@ function onChairBlocSelect() {
       unsubscribeBlocListener();
       unsubscribeBlocListener = null;
     }
+    currentUser.selectedBloc = null; // Clear chair's selected bloc
+    document.getElementById("user-info").textContent = `${currentUser.role.toUpperCase()} – ${currentUser.committee.toUpperCase()}`;
   }
 }
 
@@ -335,7 +340,7 @@ function handleRoleChange() {
  */
 async function insertClause(clause, type) {
   if (currentUser.role === "delegate" && committees[currentUser.committee].isEditingLocked) {
-    alert("Editing is currently locked by the chair!");
+    displayMessageBox("Editing Locked", "Editing is currently locked by the chair!");
     return;
   }
 
@@ -343,6 +348,7 @@ async function insertClause(clause, type) {
   const blocName = currentUser.bloc || currentUser.selectedBloc;
   if (!blocName || !committees[committee] || !committees[committee].blocs || !committees[committee].blocs[blocName]) {
     console.warn("No active bloc selected or bloc data not loaded.");
+    displayMessageBox("No Bloc Selected", "Please select or join a bloc first.");
     return;
   }
 
@@ -369,7 +375,7 @@ async function insertClause(clause, type) {
     // The onSnapshot listener for the bloc will automatically call updateResolutionDisplay()
   } catch (error) {
     console.error("Error inserting clause:", error);
-    alert("Failed to insert clause: " + error.message);
+    displayMessageBox("Error", "Failed to insert clause: " + error.message);
   }
 }
 
@@ -410,6 +416,13 @@ function updateResolutionDisplay() {
  * to the current bloc's resolution in Firestore.
  */
 async function saveResolution() {
+  // Check editing lock before saving
+  if (currentUser.role === "delegate" && committees[currentUser.committee].isEditingLocked) {
+      // Do not save, and perhaps give a visual cue that changes won't be saved
+      console.warn("Attempted to save resolution while editing is locked.");
+      return;
+  }
+
   const committee = currentUser.committee;
   const blocName = currentUser.bloc || currentUser.selectedBloc;
   if (!blocName || !committees[committee] || !committees[committee].blocs || !committees[committee].blocs[blocName]) {
@@ -431,7 +444,7 @@ async function saveResolution() {
     // The onSnapshot listener for the bloc will automatically update the display
   } catch (error) {
     console.error("Error saving resolution fields:", error);
-    alert("Failed to save resolution fields: " + error.message);
+    // displayMessageBox("Error", "Failed to save resolution fields: " + error.message); // Too frequent, log instead
   }
 }
 
@@ -472,7 +485,7 @@ async function addComment() {
   const committee = currentUser.committee;
   const blocName = currentUser.selectedBloc;
   if (!blocName || !committees[committee] || !committees[committee].blocs || !committees[committee].blocs[blocName]) {
-    alert("Please select a bloc first to add comments!");
+    displayMessageBox("No Bloc Selected", "Please select a bloc first to add comments!");
     return;
   }
 
@@ -493,7 +506,7 @@ async function addComment() {
     // The onSnapshot listener for the bloc will automatically call updateCommentsDisplay()
   } catch (error) {
     console.error("Error adding comment:", error);
-    alert("Failed to add comment: " + error.message);
+    displayMessageBox("Error", "Failed to add comment: " + error.message);
   }
 }
 
@@ -555,7 +568,7 @@ async function toggleLock() {
     // The onSnapshot listener for the committee will automatically update the UI
   } catch (error) {
     console.error("Error toggling lock:", error);
-    alert("Failed to toggle editing lock: " + error.message);
+    displayMessageBox("Error", "Failed to toggle editing lock: " + error.message);
   }
 }
 
@@ -598,6 +611,11 @@ async function setTimer() {
   const minutes = parseInt(prompt("Enter minutes:")) || 0;
   const seconds = parseInt(prompt("Enter seconds:")) || 0;
 
+  if (isNaN(minutes) || isNaN(seconds) || minutes < 0 || seconds < 0) {
+      displayMessageBox("Invalid Input", "Please enter valid positive numbers for minutes and seconds.");
+      return;
+  }
+
   const committee = currentUser.committee;
   const committeeRef = firebase.doc(window.db, 'committees', committee);
 
@@ -615,7 +633,7 @@ async function setTimer() {
     // The onSnapshot listener will update the UI
   } catch (error) {
     console.error("Error setting timer:", error);
-    alert("Failed to set timer: " + error.message);
+    displayMessageBox("Error", "Failed to set timer: " + error.message);
   }
 }
 
@@ -630,8 +648,14 @@ async function startTimer() {
   const committeeRef = firebase.doc(window.db, 'committees', committee);
   const timer = committees[committee].timer;
 
-  if (timer.isRunning || timer.totalSeconds <= 0) {
-    console.log("Timer already running or no time set.");
+  if (timer.isRunning) {
+    console.log("Timer already running.");
+    displayMessageBox("Timer Status", "Timer is already running.");
+    return;
+  }
+  if (timer.totalSeconds <= 0) {
+    console.log("No time set for timer.");
+    displayMessageBox("Timer Status", "Please set a timer duration first.");
     return;
   }
 
@@ -644,7 +668,7 @@ async function startTimer() {
     // The onSnapshot listener will update the UI and trigger startTimerInterval
   } catch (error) {
     console.error("Error starting timer:", error);
-    alert("Failed to start timer: " + error.message);
+    displayMessageBox("Error", "Failed to start timer: " + error.message);
   }
 }
 
@@ -734,8 +758,10 @@ async function pauseTimer() {
       // The onSnapshot listener will update the UI and stop the interval
     } catch (error) {
       console.error("Error pausing timer:", error);
-      alert("Failed to pause timer: " + error.message);
+      displayMessageBox("Error", "Failed to pause timer: " + error.message);
     }
+  } else {
+      displayMessageBox("Timer Status", "Timer is not running.");
   }
 }
 
@@ -761,7 +787,7 @@ async function resetTimer() {
     // The onSnapshot listener will update the UI and clear the interval
   } catch (error) {
     console.error("Error resetting timer:", error);
-    alert("Failed to reset timer: " + error.message);
+    displayMessageBox("Error", "Failed to reset timer: " + error.message);
   }
 }
 
@@ -861,8 +887,14 @@ async function enterEditor() {
     return;
   }
 
-  let authEmail = "";
-  let authPassword = "";
+  // Use the Firebase auth user provided by the Canvas environment's initial authentication
+  const user = window.auth.currentUser;
+  if (!user) {
+    // This should ideally not happen if authenticateFirebase() ran successfully in index.html
+    displayMessageBox("Authentication Error", "No active Firebase user found. Please refresh.");
+    return;
+  }
+
   let userRole = role; // Store the role from selection
 
   if (role === "chair") {
@@ -871,10 +903,8 @@ async function enterEditor() {
       displayMessageBox("Login Error", "Invalid chair password!");
       return;
     }
-    // For simplicity, hardcode a chair email/password for Firebase Auth
-    // In a real app, chairs would have their own unique logins, potentially managed by an admin
-    authEmail = `${committee}-chair@pyleamun.com`;
-    authPassword = "resolutions@26"; // This password should be more secure in production
+    // Chair login successful, assign current authenticated UID
+    currentUser = { role: userRole, committee: committee, id: user.uid };
   } else { // Delegate
     const selectedBloc = document.getElementById("available-blocs").value;
     const blocPassword = document.getElementById("bloc-password").value;
@@ -904,69 +934,47 @@ async function enterEditor() {
       return;
     }
 
-    // For delegate authentication, create a unique user for each delegate session.
-    // This is a simplified approach. In a more robust system, delegates might register
-    // or be assigned specific user accounts.
-    authEmail = `${selectedBloc}-${Date.now()}@delegate.com`;
-    authPassword = "delegate_password"; // Placeholder, ideally unique per delegate/session
-  }
+    // Delegate login successful, assign current authenticated UID and bloc
+    currentUser = { role: userRole, committee: committee, id: user.uid, bloc: selectedBloc };
 
-  try {
-    let userCredential;
-    // Attempt to sign in or create user if not found
-    try {
-      userCredential = await firebase.signInWithEmailAndPassword(window.auth, authEmail, authPassword);
-    } catch (error) {
-      if (error.code === 'auth/user-not-found') {
-        userCredential = await firebase.createUserWithEmailAndPassword(window.auth, authEmail, authPassword);
-      } else {
-        throw error; // Re-throw other authentication errors
-      }
-    }
-
-    const user = userCredential.user;
-
-    // Set currentUser object with Firebase UID
-    currentUser = { role: userRole, committee: committee, id: user.uid };
-    let userInfoText = `${currentUser.role.toUpperCase()} – ${currentUser.committee.toUpperCase()} – User ID: ${currentUser.id}`;
-
-    if (userRole === "delegate") {
-      currentUser.bloc = document.getElementById("available-blocs").value;
-      userInfoText += ` – BLOC: ${currentUser.bloc}`;
-
-      // Add delegate's UID to the bloc's members array in Firestore
-      const blocMembersRef = firebase.doc(window.db, `committees/${committee}/blocs`, currentUser.bloc);
-      const blocData = (await firebase.getDoc(blocMembersRef)).data();
-      if (blocData && !blocData.members.includes(currentUser.id)) {
+    // Add delegate's UID to the bloc's members array in Firestore
+    const blocMembersRef = firebase.doc(window.db, `committees/${committee}/blocs`, currentUser.bloc);
+    const blocData = (await firebase.getDoc(blocMembersRef)).data();
+    if (blocData && !blocData.members.includes(currentUser.id)) {
+      try {
         await firebase.updateDoc(blocMembersRef, {
           members: firebase.arrayUnion(currentUser.id)
         });
         console.log(`Delegate ${currentUser.id} added to bloc ${currentUser.bloc}.`);
+      } catch (error) {
+        console.error("Error adding delegate to bloc members:", error);
+        // This might not be a critical error to stop login, but good to log
       }
-      // Set up real-time listener for the delegate's bloc
-      setupBlocListener(currentUser.committee, currentUser.bloc);
-    } else {
-      // Chair starts with no specific bloc selected for viewing
-      currentUser.selectedBloc = null;
     }
-
-    // Transition UI
-    document.getElementById("login-container").style.display = "none";
-    document.getElementById("editor-container").style.display = "block";
-    document.getElementById("user-info").textContent = userInfoText;
-
-    // Setup role-specific interface elements
-    setupRoleInterface();
-    // Update bloc displays (will fetch from Firestore)
-    updateBlocDisplays();
-
-    // Setup real-time listener for the committee's global state
-    setupCommitteeListener();
-
-  } catch (error) {
-    console.error("Firebase Authentication or Bloc Join Error:", error);
-    displayMessageBox("Login Failed", "An error occurred during login: " + error.message);
+    // Set up real-time listener for the delegate's bloc
+    setupBlocListener(currentUser.committee, currentUser.bloc);
   }
+
+  // Update user info display
+  let userInfoText = `${currentUser.role.toUpperCase()} – ${currentUser.committee.toUpperCase()}`;
+  if (currentUser.bloc) {
+      userInfoText += ` – BLOC: ${currentUser.bloc}`;
+  } else if (currentUser.selectedBloc) {
+      userInfoText += ` – Viewing: ${currentUser.selectedBloc}`;
+  }
+  document.getElementById("user-info").textContent = userInfoText;
+
+  // Transition UI
+  document.getElementById("login-container").style.display = "none";
+  document.getElementById("editor-container").style.display = "block";
+
+  // Setup role-specific interface elements
+  setupRoleInterface();
+  // Update bloc displays (will fetch from Firestore)
+  updateBlocDisplays();
+
+  // Setup real-time listener for the committee's global state
+  setupCommitteeListener();
 }
 
 /**
