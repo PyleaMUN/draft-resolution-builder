@@ -287,7 +287,7 @@ function updateBlocDisplays() {
 
     // Always clear existing options before populating
     if (existingBlocsDiv) existingBlocsDiv.innerHTML = "<h4>Existing Blocs:</h4>";
-    if (availableBlocsSelect) availableBlocsSelect.innerHTML = '<option value="">Select a bloc</option>';
+    if (availableBlocsSelect) availableBlocsSelect.innerHTML = '<option value="">Select a bloc</option>'; // Keep default option
     if (chairBlocSelect) chairBlocSelect.innerHTML = '<option value="">Select a bloc</option>';
 
     if (snapshot.empty) {
@@ -315,7 +315,7 @@ function updateBlocDisplays() {
         option.value = blocName;
         option.textContent = blocName;
         availableBlocsSelect.appendChild(option);
-        console.log(`updateBlocDisplays: Appended option for delegate: ${blocName}`); // New log to confirm append
+        console.log(`updateBlocDisplays: Appended option for delegate: ${blocName}`);
       }
 
       // Chair's select bloc to view dropdown
@@ -329,7 +329,9 @@ function updateBlocDisplays() {
 
     // Log the final state of the delegate dropdown after the loop
     if (availableBlocsSelect && currentUser.role === "delegate") {
-        console.log("updateBlocDisplays: Delegate dropdown innerHTML after update:", availableBlocsSelect.innerHTML);
+        console.log("updateBlocDisplays: Delegate dropdown element:", availableBlocsSelect);
+        console.log("updateBlocDisplays: Delegate dropdown outerHTML after update:", availableBlocsSelect.outerHTML);
+        console.log("updateBlocDisplays: Delegate dropdown options count:", availableBlocsSelect.options.length);
     }
 
 
