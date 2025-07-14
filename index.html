@@ -15,7 +15,7 @@
   <main>
     <div id="login-container">
       <h3>Role:</h3>
-      <select id="role" onchange="handleRoleChange()">
+      <select id="role">
         <option value="delegate">Delegate</option>
         <option value="chair">Chair</option>
       </select>
@@ -26,7 +26,7 @@
       </div>
 
       <h3>Committee:</h3>
-      <select id="committee" onchange="updateBlocDisplays()">
+      <select id="committee">
         <option value="unep">UNEP</option>
         <option value="security">Security Council</option>
         <option value="ecosoc">ECOSOC</option>
@@ -40,25 +40,25 @@
 
       <div id="delegate-bloc-container" style="display:none;">
         <h3>Join Bloc:</h3>
-        <select id="available-blocs" onchange="checkBlocSelection()">
+        <select id="available-blocs">
           <option value="">Select a bloc</option>
         </select>
         <input type="password" id="bloc-password" placeholder="Bloc password" />
       </div>
 
-      <button onclick="enterEditor()" id="enter-button">Enter</button>
+      <button id="enter-button">Enter</button>
     </div>
 
     <div id="editor-container" style="display:none;">
       <div id="info-bar">
         <span id="user-info"></span>
-        <button id="lock-toggle" onclick="toggleLock()">🔒 Lock</button>
+        <button id="lock-toggle">🔒 Lock</button>
         <span id="timer">00:00</span>
-        <button id="set-timer" onclick="setTimer()">⏱️ Set Timer</button>
-        <button id="start-timer" onclick="startTimer()">▶️</button>
-        <button id="pause-timer" onclick="pauseTimer()">⏸️</button>
-        <button id="reset-timer" onclick="resetTimer()">⏹️</button>
-        <button id="export-pdf" onclick="exportToPDF()">📄 Export PDF</button>
+        <button id="set-timer">⏱️ Set Timer</button>
+        <button id="start-timer">▶️</button>
+        <button id="pause-timer">⏸️</button>
+        <button id="reset-timer">⏹️</button>
+        <button id="export-pdf">📄 Export PDF</button>
       </div>
 
       <div id="chair-controls" style="display:none;">
@@ -66,14 +66,14 @@
           <h3>Create New Bloc:</h3>
           <input type="text" id="new-bloc-name" placeholder="Bloc name" />
           <input type="password" id="new-bloc-password" placeholder="Bloc password" />
-          <button onclick="createBloc()">Create Bloc</button>
+          <button id="create-bloc-button">Create Bloc</button>
         </div>
         <div id="existing-blocs"></div>
       </div>
 
       <div id="bloc-selector" style="display:none;">
         <h4>Select Bloc to View:</h4>
-        <select id="chair-bloc-select" onchange="onChairBlocSelect()">
+        <select id="chair-bloc-select">
           <option value="">Select a bloc</option>
         </select>
       </div>
@@ -114,11 +114,35 @@
         <div id="comments-list"></div>
         <div id="comment-controls">
           <input type="text" id="comment-input" placeholder="Add a comment (chairs only)" />
-          <button id="add-comment" onclick="addComment()">Add Comment</button>
+          <button id="add-comment">Add Comment</button>
         </div>
       </div>
     </div>
   </main>
-  <script src="app.js"></script>
+
+  <!-- Firebase SDKs (using compat versions for global 'firebase' object) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script type="module">
+    // Your web app's Firebase configuration (REPLACE THIS WITH YOUR ACTUAL CONFIG)
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_IHwSSoRxcysu4QZRewZdqhhD1LuF0xQ",
+      authDomain: "pyleamun-resolution-builder.firebaseapp.com",
+      projectId: "pyleamun-resolution-builder",
+      storageBucket: "pyleamun-resolution-builder.firebasestorage.app",
+      messagingSenderId: "249510999834",
+      appId: "1:249510999834:web:b6e714939292210fd19ea3"
+    };
+
+    // Initialize Firebase and make instances globally available
+    firebase.initializeApp(firebaseConfig);
+    window.db = firebase.firestore(); // Make firestore instance globally accessible
+    window.auth = firebase.auth();   // Make auth instance globally accessible
+    window.appId = 'pyleamun-app';   // Consistent app ID for Firestore paths
+  </script>
+  <!-- Import and run your app logic -->
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
