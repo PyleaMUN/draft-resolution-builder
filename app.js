@@ -59,8 +59,7 @@ service cloud.firestore {
 */
 
 // --- Initialization and Authentication ---
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('✅ DOM fully loaded');
+window.addEventListener('load', async () => {
   // Get Firebase instances from window scope (set by index.html script module)
   db = window.db;
   auth = window.auth;
@@ -280,15 +279,14 @@ function updateBlocDisplays() {
   const blocsCollectionRef = db.collection(`artifacts/${appId}/public/data/committees/${committeeId}/blocs`);
   console.log(`updateBlocDisplays: Setting up listener for blocs at path: artifacts/${appId}/public/data/committees/${committeeId}/blocs`);
 
-  const userAtSnapshot = { ...currentUser }; // freeze currentUser at time of listener setup
+  let userAtSnapshot;
 blocListeners.unsubscribeBlocs = blocsCollectionRef.onSnapshot((snapshot) => {
+  userAtSnapshot = { ...currentUser };
   console.log("🔍 userAtSnapshot:", userAtSnapshot);
     console.log("updateBlocDisplays: Received new bloc snapshot.");
     const existingBlocsDiv = document.getElementById("existing-blocs");
     const availableBlocsSelect = document.getElementById("available-blocs");
-    if (!availableBlocsSelect) console.warn("❌ available-blocs select not found in DOM!");
     const chairBlocSelect = document.getElementById("chair-bloc-select");
-    if (!chairBlocSelect) console.warn("❌ chair-bloc-select not found in DOM!");
 
     // Always clear existing options before populating
     if (existingBlocsDiv) existingBlocsDiv.innerHTML = "<h4>Existing Blocs:</h4>";
