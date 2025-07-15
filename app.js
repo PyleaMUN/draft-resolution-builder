@@ -775,7 +775,7 @@ async function enterEditor() {
   const validCodes = {
     "unep": "un#p26", "security": "$ecur!ty", "ecosoc": "ec0s0c",
     "unesco": "un3sco2026", "nato": "n@t0", "who": "wh022",
-    "hrc": "#rc24", "unwomen": "wom(26)"
+    "hrc": "#rc24", "unwomen": "wom(26)", "historical": "historic@l"
   };
 
   if (validCodes[committee] !== code) {
