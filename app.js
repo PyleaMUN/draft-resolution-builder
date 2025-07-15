@@ -311,8 +311,8 @@ function onChairBlocSelect() {
 
 function viewBlocResolution(blocName) {
   console.log(`viewBlocResolution called for bloc: ${blocName}`);
-  if (!isAuthReady || currentUser.role !== "chair") {
-    console.warn("viewBlocResolution: Firebase not ready or not a chair.");
+  if (!isAuthReady) {
+    console.warn("viewBlocResolution: Firebase not ready.");
     return;
   }
 
