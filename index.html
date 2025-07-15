@@ -120,13 +120,12 @@
     </div>
   </main>
 
-  <!-- Firebase SDKs (using compat versions for global 'firebase' object) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
   <script type="module">
-    // Your web app's Firebase configuration (REPLACE THIS COMMENT WITH YOUR ACTUAL CONFIG)
     const firebaseConfig = {
       apiKey: "AIzaSyC_IHwSSoRxcysu4QZRewZdqhhD1LuF0xQ",
       authDomain: "pyleamun-resolution-builder.firebaseapp.com",
@@ -136,13 +135,11 @@
       appId: "1:249510999834:web:b6e714939292210fd19ea3"
     };
 
-    // Initialize Firebase and make instances globally available
     firebase.initializeApp(firebaseConfig);
-    window.db = firebase.firestore(); // Make firestore instance globally accessible
-    window.auth = firebase.auth();   // Make auth instance globally accessible
-    window.appId = 'pyleamun-app';   // Consistent app ID for Firestore paths
+    window.db = firebase.firestore();
+    window.auth = firebase.auth();
+    window.appId = 'pyleamun-app';
   </script>
-  <!-- Import and run your app logic -->
-  <script type="module" src="./app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
